@@ -70,7 +70,7 @@ john.brown@domain.com
 emma.watson@domain.com
 ```
 
-PS: This script contains very bad code but it works:)
+
 
 
 
