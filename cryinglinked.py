@@ -5,10 +5,6 @@ import cmd
 from selenium.webdriver.common.keys import Keys
 from terminaltables import AsciiTable
 import os
-from bs4 import BeautifulSoup
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
 intro = '''\033[1m\033[91m 
 
 
