@@ -5,8 +5,10 @@ import cmd
 from selenium.webdriver.common.keys import Keys
 from terminaltables import AsciiTable
 import os
-import re
-
+from bs4 import BeautifulSoup
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 intro = '''\033[1m\033[91m 
 
 
@@ -23,7 +25,8 @@ intro = '''\033[1m\033[91m
             Author     : Samet Sazak
             Twitter    : @belleveben
             Github     : @sametsazak
-            Note       : Get chromeweb driver with the same directory and pip3 install -r req.txt
+            Licence    : Apache License 2.0
+            Note       : pip3 install -r req.txt
  \033[1m\033[94m[*]\033[0m You can use "help" command for access help section\033[0m.
 '''
 
@@ -194,34 +197,50 @@ class InformationGather:
         self.username = username
         self.password = password
         self.page = page
+    def scroll_down_page(self,driver):
+        speed=8
+        current_scroll_position, new_height= 0, 1
+        while current_scroll_position <= new_height:
+            current_scroll_position += speed
+            driver.execute_script("window.scrollTo(0, {});".format(current_scroll_position))
+            new_height = driver.execute_script("return document.body.scrollHeight")
     def GatherByLinkedin(self):
         current_working_directory = os.getcwd()
         options = webdriver.ChromeOptions()
-        options.add_argument('headless')
-        driver = webdriver.Chrome(current_working_directory + '/chromedriver', options=options)
-        driver.get('https://www.linkedin.com/nhome')
-        driver.find_element_by_id('login-email').send_keys(self.username)
-        driver.find_element_by_id ('login-password').send_keys(self.password)
-        driver.find_element_by_id('login-submit').click()
+#        options.add_argument('headless')
+        driver = webdriver.Chrome(current_working_directory + '/chromedriver.exe')
+        driver.get('https://www.linkedin.com/login?trk=guest_homepage-basic_nav-header-signin')
+        driver.find_element_by_id('username').send_keys(self.username)
+        driver.find_element_by_id ('password').send_keys(self.password)
+        driver.find_element_by_id('password').send_keys(Keys.ENTER)
         driver.get(self.url)
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        names = driver.find_elements_by_xpath(("//span[@class='name actor-name']"))
+        self.scroll_down_page(driver=driver)
+        names = driver.find_elements_by_xpath(("//*[@class='name actor-name']"))
         title = driver.find_elements_by_xpath(("//p[@class='subline-level-1 t-14 t-black t-normal search-result__truncate']"))
-        with open('Output.csv', 'w') as csvfile:
+        with open('Output.csv', 'w', encoding="utf-8") as csvfile:
             print("\n \033[1m\033[94m[*]\033[0m Fetching Started...\n")
             fieldnames = ['name', 'title']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
+            #fetch first page
+            driver.get(self.url)
+            self.scroll_down_page(driver=driver)
+            names = driver.find_elements_by_xpath(("//*[@class='name actor-name']"))
+            title = driver.find_elements_by_xpath(("//p[@class='subline-level-1 t-14 t-black t-normal search-result__truncate']"))
+            for i in range(0,len(names)):
+                print(names[i].text)
+                writer.writerow({'name': names[i].text, 'title': title[i].text})
+            print("\n \033[1m\033[94m[+]\033[0m Fetching First Page is Finished!...\n")
             for k in range(2,int(self.page)):
                 driver.get('{0}&page={1}'.format(self.url, k))
                 sleep(2)
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                sleep(0.5)
-                names = driver.find_elements_by_xpath(("//span[@class='name actor-name']"))
+                self.scroll_down_page(driver=driver)
+                names = driver.find_elements_by_xpath(("//*[@class='name actor-name']"))
                 title = driver.find_elements_by_xpath(("//p[@class='subline-level-1 t-14 t-black t-normal search-result__truncate']"))
                 for i in range(0,len(names)):
+                    print(names[i].text)
                     writer.writerow({'name': names[i].text, 'title': title[i].text})
-        print("\n \033[1m\033[94m[+]\033[0m Fetching Finished!...\n")
+        print("\n \033[1m\033[94m[+]\033[0m All Fetching is Finished!...\n")
 
 
 class genEmailMain(cmd.Cmd):
@@ -236,10 +255,10 @@ class genEmailMain(cmd.Cmd):
             ["ID", "Pattern", "Description"],
             ["1", "(firstname).(surname)@company.com", "Generate Emails given pattern"],
             ["2", "(surname).(firstname)@company.com", "Generate Emails given pattern"],
-            ["3", "(s).(firstname)@company.com", "(s) is the first character of surname"],
-            ["4", "(firstname).(s)@company.com", "(s) is the first character of surname"],
-            ["5", "(f).(surname)@company.com", "(f) is the first character of firstname"],
-            ["6", "(surname).(f)@company.com", "(f) is the first character of firstname"],
+            ["3", "(s).(firstname)@company.com", "(s) is first character of surname"],
+            ["4", "(firstname).(s)@company.com", "(s) is first character of surname"],
+            ["5", "(f).(surname)@company.com", "(f) is first character of firstname"],
+            ["6", "(surname).(f)@company.com", "(f) is first character of firstname"],
             ["7", "(firstname)(surname)@company.com", "Generate Emails given pattern"],
             ["8", "(surname)(firstname)@company.com", "Generate Emails given pattern"],
         ]    
@@ -261,10 +280,10 @@ class genEmailMain(cmd.Cmd):
             ["ID", "Pattern", "Description"],
             ["1", "(firstname).(surname)@company.com", "Generate Emails given pattern"],
             ["2", "(surname).(firstname)@company.com", "Generate Emails given pattern"],
-            ["3", "(s).(firstname)@company.com", "(s) is the first character of surname"],
-            ["4", "(firstname).(s)@company.com", "(s) is the first character of surname"],
-            ["5", "(f).(surname)@company.com", "(f) is the first character of firstname"],
-            ["6", "(surname).(f)@company.com", "(f) is the first character of firstname"],
+            ["3", "(s).(firstname)@company.com", "(s) is first character of surname"],
+            ["4", "(firstname).(s)@company.com", "(s) is first character of surname"],
+            ["5", "(f).(surname)@company.com", "(f) is first character of firstname"],
+            ["6", "(surname).(f)@company.com", "(f) is first character of firstname"],
             ["7", "(firstname)(surname)@company.com", "Generate Emails given pattern"],
             ["8", "(surname)(firstname)@company.com", "Generate Emails given pattern"],
 
@@ -279,7 +298,7 @@ class genEmailMain(cmd.Cmd):
             global moduleName
             moduleName = line.split()[0]
         except IndexError:
-            print("\n \033[1m\033[91m[!]\033[0m You need to give a valid module id.\033[0m\n")
+            print("\n \033[1m\033[91m[!]\033[0m You need to give a valid payload id.\033[0m\n")
         if moduleName == "1":
             generateEmailx = generateEmails(1)
             generateEmailx.cmdloop()
@@ -307,7 +326,6 @@ class genEmailMain(cmd.Cmd):
         else:
             pass
 
-          
     def do_exit(self, line):
         print(" \n \033[1m\033[94m[*]\033[0m Cya!\033[0m\n")
         return True
@@ -316,10 +334,10 @@ class genEmailMain(cmd.Cmd):
         pass
 
     def help_list(self):
-        print("List available modules")
+        print("List available payloads")
 
     def help_use(self):
-        print("Use specific module. Syntax: use <id> ")
+        print("Use specific payload. Syntax: use <id> ")
 
     def help_exit(self):
         print("Exit CryingLinked")
@@ -335,7 +353,6 @@ class genEmailMain(cmd.Cmd):
 
     def help_back(self):
         print("Back to CryingLinked main menu.")
-
 
 
 class generateEmails(CryingLinkedCmd):
@@ -392,12 +409,6 @@ class generateEmails(CryingLinkedCmd):
                 print("\n \033[1m\033[91m[!]\033[0m Please enter valid value.\n")
         except:
             print("Something went wrong, try again.")
-    def validate_email(self, email):
-        match = re.match('^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', email)
-        if match == None:
-            return False
-        else:
-            return True
 
     def do_generate(self, line):
         if self.domain_adress is None:
@@ -442,15 +453,12 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible firstname.lastname@company.com
             self.maillist_one.append(pattern2) # generating possible secondname.lastname@company.com
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
@@ -470,15 +478,12 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible firstname.lastname@company.com
             self.maillist_one.append(pattern2) # generating possible secondname.lastname@company.com        
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
@@ -500,15 +505,12 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible firstname.l@company.com
             self.maillist_one.append(pattern2) # generating possible secondname.l@company.com        
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
@@ -531,15 +533,12 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible f.lastname@company.com
             self.maillist_one.append(pattern2) # generating possible s.lastname@company.com        
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
@@ -563,20 +562,18 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible f.lastname@company.com
             self.maillist_one.append(pattern2) # generating possible s.lastname@company.com        
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
             pass
     def pattern6(self):
+        # 6  | (surname).(f)@company.com 
         for i in self.peopleWithOneName_raw:
             name_english = self.replaceWithEnglish(i[0]).lower()
             surname_english = self.replaceWithEnglish(i[1]).lower()
@@ -594,20 +591,18 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible f.lastname@company.com
             self.maillist_one.append(pattern2) # generating possible s.lastname@company.com        
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
             pass
     def pattern7(self):
+        # 6  | (surname).(f)@company.com 
         for i in self.peopleWithOneName_raw:
             name_english = self.replaceWithEnglish(i[0]).lower()
             surname_english = self.replaceWithEnglish(i[1]).lower()
@@ -622,15 +617,12 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible f.lastname@company.com
             self.maillist_one.append(pattern2) # generating possible s.lastname@company.com        
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
@@ -650,21 +642,18 @@ class generateEmails(CryingLinkedCmd):
             self.maillist_one.append(pattern) # generating possible f.lastname@company.com
             self.maillist_one.append(pattern2) # generating possible s.lastname@company.com        
         try:
-            with open(self.output_file, 'w', newline='') as csvfile:
+            with open(self.output_file, 'w', newline='', encoding="utf-8") as csvfile:
                 fieldnames = ['email']
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
                 for i in self.maillist_one:
-                    if self.validate_email(i):
-                        writer.writerow({'email': i})
-                    else:
-                        pass
+                    writer.writerow({'email': i})
             print("File : {0} generated".format(self.output_file))
         except Exception as e:
             print(e)
             pass
     def loadFromCSV(self):
-        with open(self.file_input, newline='') as csvfile:
+        with open(self.file_input, newline='', encoding="utf-8") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 temporary_item = row['name'].split(',')
