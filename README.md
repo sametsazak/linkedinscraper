@@ -2,7 +2,7 @@
 
 LinkedinScraper is an another information gathering tool written in python. You can scrape employees of companies on Linkedin.com and then create these employee names, titles and emails.
 
-![alt text](https://raw.githubusercontent.com/sametsazak/cryinglinked/master/images/crying.png)
+![alt text](https://raw.githubusercontent.com/sametsazak/cryinglinked/master/images/logo.png)
 
 ## Install and Usage:
 
