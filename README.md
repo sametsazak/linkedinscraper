@@ -1,6 +1,6 @@
-# CryingLinked
+# LinkedinScraper
 
-CryingLinked is an another information gathering tool written in python that scrapes linkedin.com with given company url and generates email addresses
+LinkedinScraper is an another information gathering tool written in python. You can scrape employees of companies on Linkedin.com and then create these employee names, titles and emails.
 
 ![alt text](https://raw.githubusercontent.com/sametsazak/cryinglinked/master/images/crying.png)
 
@@ -13,10 +13,10 @@ CryingLinked is an another information gathering tool written in python that scr
 pip3 install -r req.txt
 ```
 
-3) Start cryinglinked.py
+3) Start linkedinscraper.py
 
 ````
-python3 cryinglinked.py
+python3 linkedinscraper.py
 ````
 
 ## How to scrape?:
