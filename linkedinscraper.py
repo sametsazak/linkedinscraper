@@ -22,7 +22,7 @@ intro = '''\033[1m\033[91m
             Author     : Samet Sazak
             Twitter    : @belleveben
             Github     : @sametsazak
-            Licence    : Apache License 2.0
+            Licence    : GPL-3.0 License
             Note       : pip3 install -r req.txt
  \033[1m\033[94m[*]\033[0m You can use "help" command for access help section\033[0m.
 '''
